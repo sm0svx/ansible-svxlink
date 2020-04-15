@@ -1,0 +1,327 @@
+= SvxLink Ansible Management
+:author:              Tobias Blomberg, SM0SVX
+:source-highlighter:  rouge
+:icons:               font
+:doctype:             book
+:data-uri:
+:toc2:
+:toclevels:           4
+:revdate:             21 mar 2020
+
+// To build this document you need to have the asciidoctor software installed.
+// You also need to install the Rouge source highlighter for syntax
+// highlighting to work.
+//
+// Render to different formats using:
+//
+//   html: asciidoctor README.adoc
+//   pdf: asciidoctor-pdf README.adoc
+
+
+== Introduction
+Ansible is an orchestration tool used to manage multiple computers with ease:
+"Infrastructure as code".  For SvxLink it is used to build packages from Git
+source, install those packages, configure the software and make sure that all
+applications are started.
+
+There need to be exactly one build server for each combination of distribution
+version and architecture. If you for example are running SvxLink software on a
+Debian 9 Intel computer and a Raspbian 9 Raspberry Pi you need two build hosts
+running those distributions with the correct architecture. Most of the time the
+build server can be the same as one of the nodes running SvxLink software.
+
+When everything has been set up it is possible to build the software and update
+all nodes with one command, by running a so called Ansible playbook.
+
+At the moment this Ansible structure can only fully handle nodes that use
+the Debian Linux distribution, which also includes Raspbian. It would probably
+be quite easy to add other Debian derived distributions as well, like Ubuntu,
+but this has not been tested at the moment.
+
+Ansible perform all work using SSH so there are very little setup that have to
+be done on the managed nodes. How to configure everything is described in
+Ansible roles and playbooks. What to configure them with is described in the so
+called inventory. The inventory consists of the `hosts` file, the `group_vars`
+directory and the `host_vars` directory. There is also the `files` directory
+which contain miscellaneous files. The playbooks are the `.yml` files in the
+top level directory and the roles can be found under the `roles` directory.
+
+
+== Ansible Manager Setup
+The Ansible manager is the computer from where all Ansible playbooks are run.
+SSH is used to communicate with all nodes so there is no special protocol
+involved and no special software is needed on the nodes to be managed.
+However, there are a couple of steps to perform before the playbooks can be run
+for the first time.
+
+=== Generate the SSH Keypair
+Generating a new SSH keypair only have to be done if it's missing or if it
+need to be changed for some reason.
+
+  ssh-keygen -f files/id_rsa -C ansiblemgr
+
+=== SSH Agent
+Since the SSH private key file is password protected the SSH agent application
+need to run. It may already be running but if it's not it have to be started.
+This can be done using the following command.
+
+[source,shell]
+----
+eval $(ssh-agent -t 4h)
+----
+
+To do this automatically on login, put the following lines in your
+`~/.profile` or `~/.bash_profile`.
+
+[source,shell]
+----
+export SSH_AGENT_ENV="$SSH_AGENT_ENV/.ssh/ssh-agent-env"
+source "$SSH_AGENT_ENV" &>/dev/null ||:
+ssh-add -l &>/dev/null &&:
+if [ $? -eq 2 ]; then
+  echo "Starting ssh-agent"
+  ssh-agent -t 1h > "$SSH_AGENT_ENV"
+  source "$SSH_AGENT_ENV"
+fi
+----
+
+=== Selecting the SvxLink Version
+The build hosts build SvxLink by cloning the SvxLink Git repo. By default it
+clones the master branch. Both the cloning URL and the branch to be used can be
+changed. That is done by changing the values in the file
+`group_vars/svxlink_build.yml`.
+
+=== Selecting Language Packs
+By default only the English (en_US-heather) language pack is installed. To add more language packs, edit the file `group_vars/svxlink.yml`. Add an entry to the `svxlink_runner_langpacks` variable that looks somthing like the one below. This is an example for the Swedish language pack.
+
+[source,yaml]
+  - lang: "sv_SE"
+    name: "elin"
+    url: "https://github.com/sm0svx/svxlink-sounds-sv_SE-elin/releases/download/next/svxlink-sounds-sv_SE-elin-16k-next.tar.bz2"
+
+
+== Adding a New Node
+There are a couple of steps that must be performed to start using Ansible with
+a SvxLink node.
+
+=== Enable SSH Access
+The node must have SSH access enabled. That includes making sure that the SSH
+server is running and that the SSH port, normally 22/tcp, is open for incoming
+connections from the Ansible manager.
+
+IMPORTANT: Make sure that you can login from the Ansible manager to the new
+node using SSH. This will also add the host to the known_hosts file which is
+very important since Ansible will not do that automatically for security
+reasons.
+
+=== Update the Hosts File
+The first step in adding a new node is to add its hostname to the `hosts` file.
+To be clear, that is the hosts file in the Ansible playbook directory.  Add the
+node to one or more sections depending on what SvxLink applications it is going
+to run: svxlink, remotetrx, svxreflector, svxportal and/or svxlink_builder. The
+svxlink_builder is a node that build a package from source which is then used
+to install SvxLink on other nodes, the runners. A node may be, and often is, a
+builder and a runner at the same time.
+
+It is possible to specify extra configuration after the hostname in the hosts
+file on the format `var_name=var_value`. There are two especially useful
+variables:
+
+ansible_host::
+Use this variable to specify the IP address of the host if it can't be looked
+up in the DNS.
+
+ansible_port::
+Use this variable if the SSH port is not the standard port 22.
+
+=== Ansible Target Setup
+Before Ansible can be used to manage a remote SvxLink node it has to be set up
+as an Ansible target. That involves creating a dedicated user on the remote
+node that is used by Ansible to do all setup. The user is set up with unset
+password so that only public key login is possible. The user is also set up
+with the ability to execute sudo without password.
+
+The Ansible target setup is done through an existing user that have sudo
+access. You need to supply the username and password for the account used to
+set up the Ansible user. The username is given in the `ansible_ssh_user`
+variable and the `-kK` command line options will make Ansible ask for the ssh
+and sudo passwords. The host to set up is given after the `-l` command line
+option. Note that it is the inventory hostname that should be used, if it is
+different from the real hostname. That typically is the case if the
+`ansible_host` variable has been specified in the hosts file.
+
+  ansible-playbook ansible-target.yml -l hostname -e ansible_ssh_user=pi -kK
+
+Now the node is set up to be used with the SvxLink Ansible playbooks as
+described below.
+
+=== A first playbook run
+Before running any more playbooks be sure to backup any existing configuration
+files and other changed files like TCL event handlers. When that is done use
+the `site.yml` playbook to do a basic setup. That playbook will also update the
+operating system packages to their latest versions and reboot the node if any
+updates were applied.
+
+  ansible-playbook site.yml -l hostname
+
+=== Adding Configuration Files
+Ansible can be set up to distribute SvxLink configuration files to all nodes.
+That is all files present under the /etc/svxlink directory on the node. Create
+a directory with the same name as used for the host in the `hosts` file,
+`files/node_hostname`. Copy all configuration files to that directory that you
+want Ansible to manage. Do not just lump all config files in that directory
+since going through the files takes some time during the execution of the
+playbook.
+
+A special kind of configuration file is the templated one. The template
+language used in Ansible is Jinja2. To be processed as a Jinja2 template the
+file name have to have `.j2` appended. So if the original filename is
+`svxlink.conf` it has to be renamed to `svxlink.conf.j2` to be processed as a
+Jinja2 template file.
+
+So what are templated configuration files good for? The cool thing about
+template files is that Ansible variables can be used to dynamically generate
+the content in the configuration file. The Jinja2 language is very advanced so
+to use it fully you need to read up on the official documentation. To just
+insert the value of an Ansible variable use the construct `{{ variable_name
+}}`. An example of where a Jinja2 configuration file is used is
+`files/svxreflector/svxreflector.conf.j2` where all node passwords are stored
+in an Ansible vault.
+
+A good start is to copy all configuration files from the remote node. A good
+utility for that is scp. Note that the first hostname in this case is the real
+hostname of the node and the the second one is the inventory hostname.
+
+  scp -r ansible@real_hostname:/etc/svxlink files/inventory_hostname
+
+Now locally remove all files that should not be managed by Ansible. The removed
+files will not be touched on the remote node.
+
+Now it's time to run the playbook to test the configuration. Start by running
+in "check and diff" mode by adding the `-CD` command line options.
+
+  ansible-playbook svxlink-runner.yml -l hostname --tags configure -CD
+
+If everything looks good run the playbook again without the `-C` option.
+
+=== Managing SvxReflector Passwords
+The SvxReflector passwords are stored in an Ansible vault. That is an encrypted
+file that in this case are containing yaml data. To edit the ansible vault
+file, use the command below.
+
+  ansible-vault edit group_vars/svxlink_runners/vault
+
+NOTE: The `!unsafe` keyword is important since it make it possible to include
+special characters in the password. However, to avoid problems it is wise to
+not use characters and character combinations that may be interpreted by
+Ansible like `'`, `"`, `{{` or `}}`.
+
+The reflector passwords can also be used in the SvxLink configuration so that
+it is synchronized on both sides.
+
+== Managing nodes
+Before running any playbooks you need to add the SSH private key to the SSH
+agent. That is easily done using the following command.
+
+  ssh-add files/id_rsa
+
+=== Playbooks
+Playbooks contain sequences of tasks that describe how to set up a node. Most
+of the tasks is not placed directly in the playbooks though but rather packaged
+in roles. More information about playbooks, roles and other Ansible concepts
+can be found in the official Ansible documentation.
+
+Ansible playbooks are normally idempotent which means they can be run multiple
+times without causing any harm. If something has already been setup that task
+does not do anything.
+
+It is important to know how to run an Ansible playbook on a limited range of
+hosts. That is easily achieved using the `-l` command line switch. Both groups
+of hosts or single hostnames can be specified. Example:
+
+  ansible-playbook ansible-runner.yml -l svxreflector
+
+That command will apply the ansible-runner.yml playbook only to the
+SvxReflector nodes as specified in the `hosts` file. Note though that if those
+nodes also run other SvxLink applications they may also be affected.
+
+The next two switches that are very good to know about are `-C` (check) and
+`-D` (diff). The check mode does not execute any commands. It just goes through
+and prints all tasks in the playbook. The diff switch will make Ansible print
+diffs for all files that is going to be changed. Example:
+
+  ansible-playbook ansible-runner.yml -l svxrefelctor -CD
+
+Lastly when something goes wrong it may be necessary to enable more verbose
+output. That is done using one or more `-v` switches.
+
+  ansible-playbook ansible-runner.yml -l svxrefelctor -vvv
+
+There is a lot more that can be said about Ansible playbooks and Ansible in
+general but that is left for the interested reader to find in the official
+Ansible documentation.
+
+==== Playbook: site.yml
+The main playbook will upgrade all packages on all nodes, build the latest
+version of SvxLink and install it on all target nodes. Any configuration
+changes will then be distributed and the software will be restarted if
+necessary.
+
+  ansible-playbook site.yml
+
+One command is all that is required to update a whole cluster of SvxLink nodes!
+Most often though it is wise to run it in parts to gain more control.
+
+==== Playbook: svxlink-build.yml
+This playbook is used to build packages that then are used by the
+svxlink-runner playbook to install SvxLink on all targets. To build SvxLink on
+all build hosts use the command below.
+
+  ansible-playbook svxlink-build.yml
+
+==== Playbook: svxlink-runner.yml
+This playbook will do all setup on the SvxLink nodes that is running SvxLink.
+It will install the SvxLink package and other packages required to run SvxLink,
+appy configuration changes and restart SvxLink applications when necessary.
+This playbook is often first run on a limited number of hosts and in check mode
+as described above.
+
+  ansible-playbook svxlink-runner.yml -l svxreflector -CD
+
+If everything looks fine it can be run for real.
+
+  ansible-playbook svxlink-runner.yml -l svxreflector
+
+If configuration has been changed outside of Ansible on a target node,
+execution for that node will fail to prevent overwriting changes. Resolve this
+situation by editing the configuration files in `files/config_dir` to reflect
+all changes made on the target node. Alternatively if you want to overwrite all
+changes on the target node with the configuration files in Ansible just remove
+the `/etc/svxlink/MD5SUMS` file from the target node. After that just run the
+playbook again for that node. First using check+diff, `-CD`, is recommended.
+
+==== Playbook: upgrade-os.yml
+Use this playbook to upgrade the operating system packages on one or more
+nodes. If any upgrades are applied the node will be rebooted. The playbook will
+upgrade one node at a time so that problems can be detected early.
+
+  ansible-playbook upgrade-os.yml
+
+==== Playbook: ansible-target.yml
+This playbook was used above to set up a node as an Ansible target. It may be
+necessary to run it again if the setup for Ansible targets changes. The command
+used above does not have to be used then unless authentication is not working
+for the ansible user. Just run it as any other playbook to set up all nodes.
+
+  ansible-playbook ansible-target.yml
+
+==== Playbook: svxportal.yml
+This playbook is used to install and configure the SvxPortal software.
+SvxPortal is a web interface for the SvxReflector server. The playbook will
+install the required packages, configure and start a MariaDB database server,
+configure and start the Apache web server and finally install the SvxPortal
+site.
+
+  ansible-playbook svxportal.yml
+
+// vim:set filetype=asciidoc:

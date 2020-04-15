@@ -1,0 +1,33 @@
+# Main inventory file for the SvxLink Ansible structure
+
+# Servers used to build packages
+[svxlink_builders]
+svxbuild-debian-10.example.org
+svxbuild-rpi-10.example.org
+
+# Servers running the SvxLink Server software
+[svxlink]
+sk3abc.example.org
+sm0xyz.example.org
+
+# Servers running the RemoteTrx application
+[remotetrx]
+sk3abc-trx[01..03].example.org
+
+# Servers running the SvxReflector software
+[svxreflector]
+svxreflector-site1
+svxreflector-site2
+
+# Servers running the SvxPortal software
+[svxportal]
+svxreflector-site1
+svxreflector-site2
+
+# A group for all servers running SvxLink software
+[svxlink_runners:children]
+svxreflector
+svxlink
+remotetrx
+
+# vim: set filetype=cfg:

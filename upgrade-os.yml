@@ -1,0 +1,36 @@
+---
+- name: Update Operating System Packages for SvxReflector Nodes
+  hosts: svxreflector
+  become: yes
+  serial: 1
+  tasks:
+    - name: Update installed packages
+      apt:
+        update_cache: yes
+        upgrade: dist
+        autoclean: yes
+        autoremove: yes
+      when: ansible_pkg_mgr == 'apt'
+      register: upgrade
+
+    - name: Reboot
+      reboot: {}
+      when: upgrade.changed
+
+- name: Update Operating System Packages for SvxLink Nodes
+  hosts: all:!svxreflector
+  become: yes
+  serial: 1
+  tasks:
+    - name: Update installed packages
+      apt:
+        update_cache: yes
+        upgrade: dist
+        autoclean: yes
+        autoremove: yes
+      when: ansible_pkg_mgr == 'apt'
+      register: upgrade
+
+    - name: Reboot
+      reboot: {}
+      when: upgrade.changed|d(false)

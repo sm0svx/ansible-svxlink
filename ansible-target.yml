@@ -1,0 +1,28 @@
+---
+- name: Set up server as ansible target
+  hosts: all
+  vars:
+    ansible_become: True
+    ansible_ssh_pipelining: False
+  tasks:
+  - name: Create ansible user
+    user:
+      name: "{{ ansible_target_user }}"
+      comment: Ansible Automation User
+      password: "*"
+      shell: /bin/bash
+
+  - name: Install SSH public key for ansible user
+    authorized_key:
+      user: "{{ ansible_target_user }}"
+      state: present
+      key: "{{ lookup('file', 'files/id_rsa.pub') }}"
+      exclusive: True
+
+  - name: Configure sudo for ansible user
+    template:
+      src: files/ansible-sudoers.j2
+      dest: /etc/sudoers.d/ansible
+      owner: root
+      group: root
+      mode: 0440

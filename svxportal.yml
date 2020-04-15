@@ -1,0 +1,7 @@
+---
+- name: Set up SvxPortal
+  hosts: svxportal
+  vars:
+    ansible_become: True
+  roles:
+    - svxportal

@@ -1,0 +1,6 @@
+---
+- import_playbook: upgrade-os.yml
+- import_playbook: ansible-target.yml
+- import_playbook: svxlink-build.yml
+- import_playbook: svxlink-runner.yml
+- import_playbook: svxportal.yml

@@ -1,0 +1,5 @@
+---
+- name: Prepare build host and build SvxLink
+  hosts: svxlink_builders
+  roles:
+    - svxlink-builder

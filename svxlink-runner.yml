@@ -1,0 +1,5 @@
+---
+- name: Install and start SvxLink applications
+  hosts: svxlink_runners
+  roles:
+    - svxlink-runner
