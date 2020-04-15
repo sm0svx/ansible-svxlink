@@ -58,6 +58,7 @@ for the first time.
 Generating a new SSH keypair only have to be done if it's missing or if it
 need to be changed for some reason.
 
+  mkdir files
   ssh-keygen -f files/id_rsa -C ansiblemgr
 
 === SSH Agent
@@ -92,7 +93,10 @@ changed. That is done by changing the values in the file
 `group_vars/svxlink_build.yml`.
 
 === Selecting Language Packs
-By default only the English (en_US-heather) language pack is installed. To add more language packs, edit the file `group_vars/svxlink.yml`. Add an entry to the `svxlink_runner_langpacks` variable that looks somthing like the one below. This is an example for the Swedish language pack.
+By default only the English (en_US-heather) language pack is installed. To add
+more language packs, edit the file `group_vars/svxlink.yml`. Add an entry to
+the `svxlink_runner_langpacks` variable that looks somthing like the one below.
+This is an example for the Swedish language pack.
 
 [source,yaml]
   - lang: "sv_SE"
