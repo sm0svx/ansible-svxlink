@@ -20,8 +20,13 @@
       exclusive: True
 
   - name: Configure sudo for ansible user
-    template:
-      src: files/ansible-sudoers.j2
+    copy:
+      content: |
+        # SSH pipelining does not work with requiretty enabled
+        Defaults:{{ ansible_target_user }} !requiretty
+
+        # Let the ansible user execute any command as any user
+        {{ ansible_target_user }}   ALL=(ALL:ALL) NOPASSWD: ALL
       dest: /etc/sudoers.d/ansible
       owner: root
       group: root
