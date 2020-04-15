@@ -1,0 +1,9 @@
+---
+# Configure and start the SvxReflector server
+svxlink_runner_use_svxreflector: True
+
+# The local directory where Ansible can find the SvxLink applications config
+svxlink_runner_config: "files/svxreflector"
+
+# Enable the use of logrotate for SvxLink applications logs
+svxlink_runner_use_logrotate: True

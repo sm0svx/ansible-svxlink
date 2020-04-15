@@ -1,0 +1,30 @@
+---
+# The local directory where Ansible can find the SvxLink applications config
+svxlink_runner_config: "files/{{ inventory_hostname }}"
+
+# SvxReflector Passwords
+reflector_passwords: "{{ vault_reflector_passwords }}"
+
+# A set of base mappings from talkgroups to CTCSS tone frequencies that are
+# valid for all nodes
+svxlink_runner_ctcss_to_tg_base:
+  88.5: 240
+  123.0: 2400
+  233.6: 2401
+  146.2: 2402
+  141.3: 2403
+  151.4: 2404
+  91.5: 2405
+  118.8: 2406
+  156.7: 2407
+
+# A set of extra mappings from talkgroups to CTCSS tone frequencies that apply
+# to a single or few nodes
+svxlink_runner_ctcss_to_tg_extra: {}
+
+# All mappings from talkgroups to CTCSS
+svxlink_runner_ctcss_to_tg_all: "{{ svxlink_runner_ctcss_to_tg_base|combine(svxlink_runner_ctcss_to_tg_extra) }}"
+
+# A string containing a list of all defined CTCSS tones suitable to insert at
+# the CTCSS_FQ SvxLink/RemoteTrx configuration variable
+svxlink_runner_ctcss_fq: "{{ svxlink_runner_ctcss_to_tg_all.keys()|sort|join(',') }}"

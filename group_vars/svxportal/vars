@@ -1,0 +1,9 @@
+---
+# Live listen URL
+svxportal_live_link_url: "http://live.example.org:8000/svxcard96"
+
+# Database settings
+svxportal_db_password: "{{ vault_svxportal_db_password }}"
+
+# Iframe under system description
+svxportal_documentation_url: "http://docs.example.org/dokuwiki/doku.php?id=svxreflector&do=export_xhtml"

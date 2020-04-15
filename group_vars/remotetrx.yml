@@ -1,0 +1,3 @@
+---
+# Configure and start the RemoteTrx server
+svxlink_runner_use_remotetrx: true
