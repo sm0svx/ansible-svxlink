@@ -7,9 +7,6 @@ svxlink_runner_langpacks:
   - lang: "en_US"
     name: "heather"
     url: "https://github.com/sm0svx/svxlink-sounds-en_US-heather/releases/download/19.09.99/svxlink-sounds-en_US-heather-16k-19.09.99.tar.gz"
-  - lang: "sv_SE"
-    name: "elin"
-    url: "https://github.com/sm0svx/svxlink-sounds-sv_SE-elin/releases/download/next/svxlink-sounds-sv_SE-elin-16k-next.tar.bz2"
 
 # The hostname for the SvxReflector host
 svxlink_runner_reflector_host: "reflector.example.org"
