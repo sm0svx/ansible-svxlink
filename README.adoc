@@ -58,7 +58,6 @@ for the first time.
 Generating a new SSH keypair only have to be done if it's missing or if it
 need to be changed for some reason.
 
-  mkdir files
   ssh-keygen -f files/id_rsa -C ansiblemgr
 
 === SSH Agent
