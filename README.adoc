@@ -103,6 +103,15 @@ This is an example for the Swedish language pack.
     name: "elin"
     url: "https://github.com/sm0svx/svxlink-sounds-sv_SE-elin/releases/download/next/svxlink-sounds-sv_SE-elin-16k-next.tar.bz2"
 
+=== Setting a New Password for the Vaults
+A vault is where Ansible stores variables that is sensitive, like passwords.
+The default password for all vaults should be changed before starting to use the
+Ansible structure. By default the password is set to 'qwerty'. Find the vaults
+and change their password using the following commands.
+
+  ansible-vault rekey group_vars/svxlink_runners/vault
+  ansible-vault rekey group_vars/svxportal/vault
+
 
 == Adding a New Node
 There are a couple of steps that must be performed to start using Ansible with
