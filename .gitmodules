@@ -1,9 +1,9 @@
 [submodule "roles/svxlink-builder"]
 	path = roles/svxlink-builder
-	url = /sm0svx/ansible-role-svxlink-builder.git
+	url = https://github.com/sm0svx/ansible-role-svxlink-builder.git
 [submodule "roles/svxlink-runner"]
 	path = roles/svxlink-runner
-	url = /sm0svx/ansible-role-svxlink-runner.git
+	url = https://github.com/sm0svx/ansible-role-svxlink-runner.git
 [submodule "roles/svxportal"]
 	path = roles/svxportal
-	url = /sm0svx/ansible-role-svxportal.git
+	url = https://github.com/sm0svx/ansible-role-svxportal.git
