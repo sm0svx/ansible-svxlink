@@ -32,5 +32,6 @@
       register: upgrade
 
     - name: Reboot
-      reboot: {}
+      reboot:
+        post_reboot_delay: 10
       when: upgrade.changed|d(false)
