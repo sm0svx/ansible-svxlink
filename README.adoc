@@ -80,10 +80,16 @@ source "$SSH_AGENT_ENV" &>/dev/null ||:
 ssh-add -l &>/dev/null &&:
 if [ $? -eq 2 ]; then
   echo "Starting ssh-agent"
-  ssh-agent -t 1h > "$SSH_AGENT_ENV"
+  ssh-agent -t 4h > "$SSH_AGENT_ENV"
   source "$SSH_AGENT_ENV"
 fi
 ----
+
+Now load the private key into ssh-agent. This will have to be done every time
+before using the playbooks or every four hours since there are a timeout of
+four hours configured above.
+
+  ssh-add files/id_rsa
 
 === Selecting the SvxLink Version
 The build hosts build SvxLink by cloning the SvxLink Git repo. By default it
