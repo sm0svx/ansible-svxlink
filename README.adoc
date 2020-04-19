@@ -268,12 +268,12 @@ The next two switches that are very good to know about are `-C` (check) and
 and prints all tasks in the playbook. The diff switch will make Ansible print
 diffs for all files that is going to be changed. Example:
 
-  ansible-playbook ansible-runner.yml -l svxrefelctor -CD
+  ansible-playbook ansible-runner.yml -l svxreflector -CD
 
 Lastly when something goes wrong it may be necessary to enable more verbose
 output. That is done using one or more `-v` switches.
 
-  ansible-playbook ansible-runner.yml -l svxrefelctor -vvv
+  ansible-playbook ansible-runner.yml -l svxreflector -vvv
 
 There is a lot more that can be said about Ansible playbooks and Ansible in
 general but that is left for the interested reader to find in the official
