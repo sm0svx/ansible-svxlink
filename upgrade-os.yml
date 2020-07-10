@@ -20,7 +20,7 @@
 - name: Update Operating System Packages for SvxLink Nodes
   hosts: all:!svxreflector
   become: yes
-  serial: 1
+  serial: 2
   tasks:
     - name: Update installed packages
       apt:
